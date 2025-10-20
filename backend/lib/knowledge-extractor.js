@@ -1,51 +1,3 @@
-# Task 04: Stage 4 - Knowledge Extractor
-
-**Status**: [x] DONE
-**Estimated Time**: 6 hours
-**Dependencies**: Task 03 (Cleaner)
-**Priority**: CRITICAL
-**File**: `lib/knowledge-extractor.js`
-**Started**: 2025-01-20
-**Completed**: 2025-01-20
-
----
-
-## 📋 Description
-
-**MOST IMPORTANT STAGE**: Transform cleaned paragraphs into structured knowledge objects with semantic meaning. This extracts topics, entities, key concepts, quotes, and creates meaningful knowledge chunks for the chatbot.
-
----
-
-## 🎯 Goals
-
-1. Segment paragraphs by topics
-2. Extract named entities (people, places, concepts)
-3. Identify and extract key quotes
-4. Extract facts, insights, and principles
-5. Classify knowledge type (advice, principle, story, etc.)
-6. Assign importance levels
-7. Optional: Auto-generate Q&A pairs
-
----
-
-## ✅ Acceptance Criteria
-
-- [ ] Identifies distinct topics in transcript
-- [ ] Extracts entities: people, concepts, ages, references
-- [ ] Preserves important quotes verbatim
-- [ ] Creates structured knowledge objects
-- [ ] Assigns appropriate categories
-- [ ] Links related knowledge objects
-- [ ] Maintains timestamp traceability
-- [ ] Extracts 30-50 knowledge objects from transcript
-
----
-
-## 🔧 Implementation
-
-### lib/knowledge-extractor.js
-
-```javascript
 const { OpenAI } = require('openai')
 
 // Initialize OpenAI (optional - for advanced extraction)
@@ -71,7 +23,7 @@ function extractTopics(paragraphs) {
   paragraphs.forEach((para, idx) => {
     // Simple keyword-based topic detection
     const foundKeywords = topicIndicators.filter(keyword =>
-      para.fullText.includes(keyword)
+      para.cleanedText.includes(keyword)
     )
 
     if (foundKeywords.length > 0) {
@@ -110,10 +62,10 @@ function extractEntities(text) {
 
   // People patterns
   const peoplePatterns = [
-    /青木[さん]?/g,
-    /野中[郁次郎]?[先生]?/g,
-    /竹沢[さん]?/g,
-    /松下[之助]?/g
+    /青木(?:さん)?/g,
+    /野中(?:郁次郎)?(?:先生)?/g,
+    /竹沢(?:さん)?/g,
+    /松下(?:之助)?/g
   ]
 
   peoplePatterns.forEach(pattern => {
@@ -243,21 +195,24 @@ function assessImportance(knowledgeObject) {
 /**
  * Main extraction function
  */
-async function extractKnowledge(paragraphs, options = {}) {
+async function extractKnowledge(cleanedResult, options = {}) {
   const {
     useAI = false, // Use OpenAI for advanced extraction
     generateQA = false
   } = options
 
+  const { cleanedParagraphs } = cleanedResult
   const knowledgeObjects = []
   let knowledgeId = 1
 
   // Group by topics first
-  const topics = extractTopics(paragraphs)
+  const topics = extractTopics(cleanedParagraphs)
+
+  console.log(`Identified ${topics.length} topics from ${cleanedParagraphs.length} paragraphs`)
 
   for (const topic of topics) {
     // Combine topic paragraphs
-    const topicText = topic.paragraphs.map(p => p.fullText).join(' ')
+    const topicText = topic.paragraphs.map(p => p.cleanedText).join(' ')
 
     // Extract components
     const entities = extractEntities(topicText)
@@ -302,6 +257,11 @@ async function extractKnowledge(paragraphs, options = {}) {
     console.log('AI enhancement enabled - would use OpenAI API here')
   }
 
+  console.log(`Extracted ${knowledgeObjects.length} knowledge objects`)
+  console.log(`  High importance: ${knowledgeObjects.filter(k => k.metadata.importance === 'high').length}`)
+  console.log(`  Medium importance: ${knowledgeObjects.filter(k => k.metadata.importance === 'medium').length}`)
+  console.log(`  Low importance: ${knowledgeObjects.filter(k => k.metadata.importance === 'low').length}`)
+
   return {
     knowledge: knowledgeObjects,
     stats: {
@@ -322,181 +282,3 @@ module.exports = {
   classifyKnowledgeType,
   assessImportance
 }
-```
-
----
-
-## 🧪 Testing Checklist
-
-### Unit Tests
-
-```javascript
-const {
-  extractEntities,
-  extractQuotes,
-  classifyKnowledgeType,
-  assessImportance
-} = require('../../lib/knowledge-extractor')
-
-describe('Knowledge Extractor', () => {
-
-  test('extractEntities finds people', () => {
-    const text = '青木さんは野中郁次郎先生に会いました。'
-    const entities = extractEntities(text)
-
-    expect(entities.people).toContain('青木さん')
-    expect(entities.people).toContain('野中')
-  })
-
-  test('extractEntities finds concepts', () => {
-    const text = '黄金率とは価値観の基準です。'
-    const entities = extractEntities(text)
-
-    expect(entities.concepts).toContain('黄金率')
-    expect(entities.concepts).toContain('価値観')
-  })
-
-  test('extractEntities finds ages', () => {
-    const text = '29歳でバイブルと出会いました。'
-    const entities = extractEntities(text)
-
-    expect(entities.ages).toContain(29)
-  })
-
-  test('extractQuotes finds quoted text', () => {
-    const text = '彼は「信用は大切です」と言いました。'
-    const quotes = extractQuotes(text)
-
-    expect(quotes).toContain('信用は大切です')
-  })
-
-  test('classifyKnowledgeType identifies advice', () => {
-    const text = '人を変えようとするべきではありません。'
-    expect(classifyKnowledgeType(text)).toBe('advice')
-  })
-
-  test('classifyKnowledgeType identifies biographical events', () => {
-    const text = '29歳でバイブルと出会いました。'
-    expect(classifyKnowledgeType(text)).toBe('biographical_event')
-  })
-
-  test('assessImportance rates correctly', () => {
-    const highImportance = {
-      content: { quotes: ['黄金率とは...', '信用は...'] },
-      entities: { people: ['青木'], concepts: ['黄金率', '信用'] }
-    }
-
-    expect(assessImportance(highImportance)).toBe('high')
-  })
-})
-```
-
-### Integration Tests
-
-- [ ] **Test with cleaned paragraphs**:
-  ```bash
-  node -e "
-    const pipeline = require('./lib/content-pipeline')
-    // Run stages 1-3, then extract knowledge
-    // Verify 30-50 knowledge objects created
-  "
-  ```
-
-- [ ] **Verify extraction quality**:
-  - Check that 黄金率 knowledge is extracted
-  - Verify quotes are preserved
-  - Ensure entities are correct
-
-### Manual Verification
-
-- [ ] **Check key knowledge objects**:
-  1. "黄金率との出会い" - should have:
-     - Entities: 青木, バイブル, 黄金率, マタイ7章12節
-     - Age: 29
-     - Type: biographical_event
-     - Importance: high
-     - Quote: "何事でも人々から..."
-
-  2. "価値観が合わない人との距離" - should have:
-     - Concepts: 価値観, 距離, 人間関係
-     - Type: advice
-     - Importance: high
-     - Quote: "価値観が合わない人とは..."
-
-  3. "信用は無形の資本" - should have:
-     - Concepts: 信用, 資本
-     - Type: principle
-     - Quote: "信用は無形の資本なんです"
-
----
-
-## 📊 Expected Output
-
-```javascript
-{
-  knowledge: [
-    {
-      knowledgeId: "k001",
-      topic: "黄金率",
-      type: "biographical_event",
-      content: {
-        main: "青木さんは29歳でバイブルと出会い...",
-        context: "Full text...",
-        quotes: [
-          "何事でも人々からして欲しいと望む通りのことを他の人々にもそのようにしなさい"
-        ],
-        keyTakeaway: "29歳での黄金率との出会いが人生を変えた"
-      },
-      entities: {
-        people: ["青木"],
-        concepts: ["黄金率", "バイブル", "マタイ"],
-        ages: [29]
-      },
-      timestamp: {
-        start: "00:01:19,320",
-        end: "00:02:01,159"
-      },
-      metadata: {
-        importance: "high",
-        category: "life_philosophy",
-        themes: ["黄金率", "価値観"],
-        segmentIds: [26, 27, ...]
-      }
-    }
-    // ... more knowledge objects
-  ],
-  stats: {
-    totalKnowledgeObjects: 35,
-    highImportance: 12,
-    mediumImportance: 18,
-    lowImportance: 5,
-    topics: 8
-  }
-}
-```
-
----
-
-## ✨ Success Criteria
-
-Task is complete when:
-1. ✅ Extracts 30-50 knowledge objects
-2. ✅ All key topics identified correctly
-3. ✅ Entities extracted accurately
-4. ✅ Important quotes preserved
-5. ✅ Importance levels assigned reasonably
-6. ✅ All tests pass
-7. ✅ Can save knowledge to JSON file
-
----
-
-## 📌 Next Task
-
-**Task 05: Stage 5 - Semantic Chunker** (`tasks/backend/05-stage5-chunker.md`)
-
----
-
-**Status**: [x] DONE
-**Started**: 2025-01-20
-**Completed**: 2025-01-20
-**Notes**: Successfully extracted 6 high-quality knowledge objects with entities, quotes, and importance ratings. All tests passing. Semantic topic-based approach provides better quality than expected!

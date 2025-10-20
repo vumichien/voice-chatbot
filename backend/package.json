@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "AI-Powered Knowledge Chatbot with RAG - Backend",
   "main": "index.js",
-  "type": "module",
   "scripts": {
+    "start": "node server.js",
     "dev": "vercel dev",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:api": "node scripts/test-api-live.js",
     "process-transcript": "node scripts/process-transcript.js",
     "setup-db": "node scripts/setup-db.js"
   },
@@ -29,12 +30,16 @@
   },
   "homepage": "https://github.com/vumichien/voice-chatbot#readme",
   "dependencies": {
+    "@huggingface/inference": "^4.11.3",
     "@langchain/core": "^1.0.1",
     "@langchain/openai": "^1.0.0",
     "@pinecone-database/pinecone": "^6.1.2",
+    "@upstash/vector": "^1.2.2",
     "axios": "^1.12.2",
     "budoux": "^0.7.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "kuromoji": "^0.1.2",
     "openai": "^6.5.0",
     "subsrt-ts": "^2.1.2"

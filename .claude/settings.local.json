@@ -7,7 +7,15 @@
       "Bash(if exist node_modules move node_modules backend)",
       "Bash(npm install:*)",
       "Bash(node:*)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(test -f package.json)",
+      "Bash(npm test -- parser.test.js)",
+      "Bash(npm test -- text-reconstructor.test.js)",
+      "Bash(npm test -- content-cleaner.test.js)",
+      "Bash(npm test -- knowledge-extractor.test.js)",
+      "Bash(vercel --version)",
+      "Bash(timeout 5 node server.js)",
+      "Bash(cat CLEANUP_SUMMARY.md)"
     ],
     "deny": [],
     "ask": []

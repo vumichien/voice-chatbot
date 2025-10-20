@@ -333,6 +333,7 @@ When reaching milestones, verify in TASK_TRACKER.md:
 8. ✅ **Verify Japanese characters** display correctly
 9. ✅ **Commit code** after each completed task
 10. ✅ **Document issues** encountered
+11. ✅ **Ask for next task** after finished current task, consider about context length
 
 ### DON'T:
 1. ❌ **Skip tasks** to go faster

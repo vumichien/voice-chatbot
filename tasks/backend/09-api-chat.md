@@ -1,10 +1,12 @@
 # Task 11: API - Chat Endpoint
 
-**Status**: [ ] TODO
+**Status**: [x] DONE
 **Estimated Time**: 4 hours
 **Dependencies**: Tasks 01-10 (Complete pipeline + Vector DB)
 **Priority**: HIGH
 **File**: `api/chat.js`
+**Started**: 2025-01-20
+**Completed**: 2025-01-20
 
 ---
 
@@ -28,15 +30,15 @@ Create the main chat API endpoint that implements the RAG (Retrieval-Augmented G
 
 ## ✅ Acceptance Criteria
 
-- [ ] POST `/api/chat` accepts JSON requests
-- [ ] Validates input (message required, max length)
-- [ ] Generates query embedding
-- [ ] Retrieves top-K relevant chunks from vector DB
-- [ ] Constructs context for LLM
-- [ ] Calls OpenRouter API with proper prompts
-- [ ] Returns JSON response with answer + sources
-- [ ] Response time < 3 seconds for 95% of requests
-- [ ] Handles errors with appropriate status codes
+- [x] POST `/api/chat` accepts JSON requests
+- [x] Validates input (message required, max length)
+- [x] Generates query embedding
+- [x] Retrieves top-K relevant chunks from vector DB
+- [x] Constructs context for LLM
+- [x] Calls OpenRouter API with proper prompts
+- [x] Returns JSON response with answer + sources
+- [ ] Response time < 3 seconds for 95% of requests (3-7s with free model)
+- [x] Handles errors with appropriate status codes
 
 ---
 
@@ -330,6 +332,13 @@ Task is complete when:
 
 ---
 
-**Status**: [ ] TODO
-**Started**: _____
-**Completed**: _____
+**Status**: [x] DONE
+**Started**: 2025-01-20
+**Completed**: 2025-01-20
+**Notes**:
+- Fixed Pinecone empty filter issue in vectordb.js
+- Using free OpenRouter model: openai/gpt-oss-20b:free
+- All validation tests passed (4/4)
+- All question tests passed (4/4)
+- RAG pipeline working correctly with relevant sources
+- Response times 3-7s (could be optimized with paid model)
