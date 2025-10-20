@@ -1,0 +1,47 @@
+{
+  "name": "voice-chatbot",
+  "version": "1.0.0",
+  "description": "AI-Powered Knowledge Chatbot with RAG - Backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "process-transcript": "node scripts/process-transcript.js",
+    "setup-db": "node scripts/setup-db.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vumichien/voice-chatbot.git"
+  },
+  "keywords": [
+    "chatbot",
+    "rag",
+    "vector-db",
+    "ai",
+    "knowledge-base"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vumichien/voice-chatbot/issues"
+  },
+  "homepage": "https://github.com/vumichien/voice-chatbot#readme",
+  "dependencies": {
+    "@langchain/core": "^1.0.1",
+    "@langchain/openai": "^1.0.0",
+    "@pinecone-database/pinecone": "^6.1.2",
+    "axios": "^1.12.2",
+    "budoux": "^0.7.0",
+    "dotenv": "^17.2.3",
+    "kuromoji": "^0.1.2",
+    "openai": "^6.5.0",
+    "subsrt-ts": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.8.1",
+    "@vercel/node": "^5.4.0",
+    "jest": "^30.2.0"
+  }
+}

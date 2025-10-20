@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm init -y)",
+      "Bash(if exist package.json move package.json backend )",
+      "Bash(if exist package-lock.json move package-lock.json backend )",
+      "Bash(if exist node_modules move node_modules backend)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(npm --version)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
