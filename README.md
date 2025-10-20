@@ -139,4 +139,4 @@ ISC
 
 ## 👥 Contributors
 
-Built with Claude Code
+Detomo Inc.
