@@ -1,10 +1,12 @@
 # Task F01: Frontend Setup
 
-**Status**: [ ] TODO
+**Status**: [x] DONE
 **Estimated Time**: 2 hours
 **Dependencies**: None
 **Priority**: HIGH
 **Location**: `frontend/`
+**Started**: 2025-01-20
+**Completed**: 2025-01-20
 
 ---
 

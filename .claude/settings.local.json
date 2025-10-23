@@ -15,7 +15,15 @@
       "Bash(npm test -- knowledge-extractor.test.js)",
       "Bash(vercel --version)",
       "Bash(timeout 5 node server.js)",
-      "Bash(cat CLEANUP_SUMMARY.md)"
+      "Bash(cat CLEANUP_SUMMARY.md)",
+      "Bash(npm create vite@latest frontend -- --template vue)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(npm run build)",
+      "Bash(npm uninstall tailwindcss @tailwindcss/postcss)",
+      "Bash(npm run dev)",
+      "Bash(curl http://localhost:3000/api/health)",
+      "Bash(tasklist)",
+      "Bash(findstr node)"
     ],
     "deny": [],
     "ask": []
