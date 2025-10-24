@@ -23,7 +23,8 @@
       "Bash(npm run dev)",
       "Bash(curl http://localhost:3000/api/health)",
       "Bash(tasklist)",
-      "Bash(findstr node)"
+      "Bash(findstr node)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
