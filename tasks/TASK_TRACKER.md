@@ -12,8 +12,8 @@
 |-------|-------|-----------|----------|
 | Backend | 9 | 9 | ✅✅✅✅✅✅✅✅✅✅ 100% |
 | Frontend | 2 | 2 | ✅✅✅✅✅✅✅✅✅✅ 100% |
-| Deployment | 1 | 0 | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
-| **TOTAL** | **12** | **11** | **✅✅✅✅✅✅✅✅✅✅ 92%** |
+| Deployment | 1 | 1 | ✅✅✅✅✅✅✅✅✅✅ 100% |
+| **TOTAL** | **12** | **12** | **✅✅✅✅✅✅✅✅✅✅ 100%** |
 
 ---
 
@@ -68,9 +68,9 @@
 
 | # | Task | File | Status | Priority | Time | Started | Completed |
 |---|------|------|--------|----------|------|---------|-----------|
-| D01 | Backend Deployment | `01-backend-deploy.md` | ⬜ TODO | 🔴 HIGH | 2h | ___ | ___ |
+| D01 | Backend Deployment | `01-backend-deploy.md` | ✅ DONE | 🔴 HIGH | 1.5h | 10/24 | 10/24 |
 
-**Deployment Total**: 1 task | **Est. Time**: ~2 hours
+**Deployment Total**: 1 task | **Est. Time**: ~1.5 hours
 
 **Note**: Additional deployment tasks (environment config, frontend deployment, monitoring) can be added after backend deployment is complete.
 
@@ -155,10 +155,12 @@ These tasks MUST be completed in order:
   - ✅ Can chat with bot
   - ✅ Chat interface functional
 
-- [ ] **Milestone 4**: Deployed - **Target: TBD**
-  - ⬜ Backend deployed to Vercel
-  - ⬜ Frontend deployed to Vercel
-  - ⬜ Production ready
+- [x] **Milestone 4**: Backend Deployed - **Completed: 10/24**
+  - ✅ Backend deployed to Vercel
+  - ✅ Health and Chat APIs working
+  - ✅ All environment variables configured
+  - ✅ Vector DB connected in production
+  - ⬜ Frontend needs updating with production URL
 
 ---
 
@@ -189,17 +191,18 @@ When ALL tasks are done:
 
 - [x] Backend tasks (9/9) complete
 - [x] Frontend tasks (2/2) complete
-- [ ] Deployment tasks (0/1) complete
+- [x] Deployment tasks (1/1) complete ✅
 - [x] Backend tests passing
 - [x] Frontend tests passing (integration with backend working)
-- [ ] Backend deployed and accessible
-- [ ] Frontend deployed and accessible
+- [x] Backend deployed and accessible ✅
+- [ ] Frontend deployed and accessible (needs updating with production URL)
 - [x] Can ask questions and get accurate answers
 - [x] Sources display correctly with timestamps
-- [x] Performance acceptable (3-7s responses with free LLM)
+- [x] Performance acceptable (9s responses with free LLM)
 - [x] No errors in backend
 - [x] Documentation updated (API guides created)
 - [x] Backend setup instructions available
+- [x] Production backend URL documented
 
 ---
 
