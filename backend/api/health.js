@@ -4,7 +4,28 @@
  * Returns the health status of the backend service
  */
 
+const { securityMiddleware, applyCorsHeaders } = require('../lib/security')
+
 module.exports = async (req, res) => {
+  // Apply CORS headers
+  applyCorsHeaders(res)
+
+  // Light security check (rate limit only, no API key required for health checks)
+  const security = securityMiddleware(req, {
+    requireApiKey: false,
+    enableRateLimit: true,
+    rateLimitOptions: {
+      windowMs: 60000,  // 1 minute
+      maxRequests: 30    // 30 requests per minute (more lenient for health checks)
+    }
+  })
+
+  if (!security.passed) {
+    return res.status(429).json({
+      error: security.error,
+      retryAfter: security.retryAfter
+    })
+  }
   try {
     const health = {
       status: 'ok',

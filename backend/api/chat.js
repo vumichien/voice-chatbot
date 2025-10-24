@@ -11,15 +11,42 @@
 
 const { searchVectors } = require('../lib/vectordb')
 const { generateEmbedding } = require('../lib/embeddings')
+const { securityMiddleware, applyCorsHeaders, handlePreflight } = require('../lib/security')
 const axios = require('axios')
 
 /**
  * Main chat endpoint handler
  */
 module.exports = async (req, res) => {
+  // Handle CORS preflight
+  if (handlePreflight(req, res)) {
+    return
+  }
+
+  // Apply CORS headers
+  applyCorsHeaders(res)
+
   // Only accept POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Security checks
+  const security = securityMiddleware(req, {
+    requireApiKey: true,
+    enableRateLimit: true,
+    rateLimitOptions: {
+      windowMs: 60000,  // 1 minute
+      maxRequests: 10    // 10 requests per minute
+    }
+  })
+
+  if (!security.passed) {
+    const statusCode = security.error === 'Rate limit exceeded' ? 429 : 401
+    return res.status(statusCode).json({
+      error: security.error,
+      ...(security.retryAfter && { retryAfter: security.retryAfter })
+    })
   }
 
   const startTime = Date.now()
