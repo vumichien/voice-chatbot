@@ -2,37 +2,15 @@
   <div :class="messageClasses">
     <!-- Avatar -->
     <div :class="avatarClasses">
-      <span class="text-xs font-medium">{{ message.role === 'user' ? 'You' : 'AI' }}</span>
+      <span class="text-lg">{{ message.role === 'user' ? '👤' : '🤖' }}</span>
     </div>
 
     <!-- Message Content -->
     <div :class="bubbleClasses">
-      <p class="whitespace-pre-wrap">{{ message.content }}</p>
-
-      <!-- Sources (for AI messages) -->
-      <div v-if="message.sources && message.sources.length > 0" class="mt-3 pt-3 border-t border-gray-200">
-        <p class="text-xs font-semibold text-gray-600 mb-2">📎 Sources:</p>
-        <div class="space-y-2">
-          <div
-            v-for="(source, index) in message.sources"
-            :key="index"
-            class="text-xs text-gray-500 bg-gray-50 p-2 rounded"
-          >
-            <p v-if="source.timestamp">
-              <strong>Timestamp:</strong> {{ source.timestamp }}
-            </p>
-            <p v-if="source.topic">
-              <strong>Topic:</strong> {{ source.topic }}
-            </p>
-            <p v-if="source.text" class="mt-1 text-gray-600">
-              {{ truncateText(source.text, 150) }}
-            </p>
-          </div>
-        </div>
-      </div>
+      <p class="whitespace-pre-wrap leading-relaxed text-white">{{ message.content }}</p>
 
       <!-- Timestamp -->
-      <p class="text-xs text-gray-400 mt-2">
+      <p class="text-xs mt-2 opacity-60 text-white">
         {{ formatTime(message.timestamp) }}
       </p>
     </div>
@@ -54,24 +32,23 @@ const props = defineProps({
 
 // Computed classes for layout
 const messageClasses = computed(() => {
-  const base = 'flex items-start space-x-2'
+  const base = 'flex items-start space-x-3'
   return props.message.role === 'user'
     ? `${base} flex-row-reverse space-x-reverse`
     : base
 })
 
 const avatarClasses = computed(() => {
-  const base = 'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0'
-  return props.message.role === 'user'
-    ? `${base} bg-blue-500 text-white`
-    : `${base} bg-gray-300 text-gray-700`
+  return 'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 glass-light'
 })
 
 const bubbleClasses = computed(() => {
-  const base = 'max-w-[70%] rounded-lg px-4 py-2 break-words'
-  return props.message.role === 'user'
-    ? `${base} bg-blue-500 text-white`
-    : `${base} bg-gray-100 text-gray-900`
+  const base = 'max-w-[70%] rounded-2xl px-5 py-3 break-words'
+  if (props.message.role === 'user') {
+    return `${base} glass-strong`
+  } else {
+    return `${base} glass-light`
+  }
 })
 
 // Format timestamp
@@ -82,12 +59,5 @@ function formatTime(timestamp) {
     hour: '2-digit',
     minute: '2-digit'
   })
-}
-
-// Truncate text
-function truncateText(text, maxLength) {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
 }
 </script>

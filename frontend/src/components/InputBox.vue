@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-end space-x-2">
+  <div class="flex items-start space-x-3">
     <!-- Text Input -->
     <div class="flex-1">
       <textarea
@@ -8,7 +8,8 @@
         :disabled="disabled"
         :placeholder="placeholder"
         rows="1"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+        class="w-full px-5 py-3.5 glass-input rounded-2xl resize-none focus:outline-none disabled:cursor-not-allowed text-white placeholder-white placeholder-opacity-50"
+        style="line-height: 1.5; min-height: 52px;"
         @keydown.enter.exact.prevent="handleSend"
         @input="autoResize"
       />
@@ -17,10 +18,11 @@
     <!-- Send Button -->
     <button
       :disabled="disabled || !inputText.trim()"
-      class="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      class="glass-button px-7 py-3.5 rounded-2xl font-semibold flex-shrink-0 text-white"
+      style="min-height: 52px; margin-top: 0;"
       @click="handleSend"
     >
-      Send
+      送信
     </button>
   </div>
 </template>

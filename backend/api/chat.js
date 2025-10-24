@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   const startTime = Date.now()
 
   try {
-    const { message, conversationId, language = 'ja' } = req.body
+    const { message, conversationId, conversationHistory = [], language = 'ja' } = req.body
 
     // Validate input
     if (!message || typeof message !== 'string') {
@@ -41,6 +41,7 @@ module.exports = async (req, res) => {
     }
 
     console.log(`[Chat] Received message: ${message.substring(0, 50)}...`)
+    console.log(`[Chat] Conversation history: ${conversationHistory.length} messages`)
 
     // STEP 1: Generate query embedding
     console.log('[Chat] Step 1: Generating query embedding...')
@@ -100,7 +101,8 @@ ${context}`
 
     const llmResponse = await callOpenRouter({
       system: systemPrompt,
-      user: message,
+      conversationHistory,
+      currentMessage: message,
       model: process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free'
     })
 
@@ -145,23 +147,42 @@ ${context}`
 }
 
 /**
- * Call OpenRouter API
+ * Call OpenRouter API with conversation history
  */
-async function callOpenRouter({ system, user, model }) {
+async function callOpenRouter({ system, conversationHistory, currentMessage, model }) {
   // Check for API key
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY environment variable not set')
   }
 
   try {
+    // Build messages array: system + conversation history + current message
+    const messages = [
+      { role: 'system', content: system }
+    ]
+
+    // Add conversation history (exclude the current message if already in history)
+    if (conversationHistory && conversationHistory.length > 0) {
+      // Filter out the current message to avoid duplication
+      const historyMessages = conversationHistory
+        .filter(msg => msg.content !== currentMessage)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      messages.push(...historyMessages)
+    }
+
+    // Add current user message
+    messages.push({ role: 'user', content: currentMessage })
+
+    console.log(`[OpenRouter] Sending ${messages.length} messages to LLM`)
+
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
         model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user }
-        ],
+        messages,
         temperature: 0.7,
         max_tokens: 500
       },

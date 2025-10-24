@@ -3,11 +3,12 @@ import axios from 'axios'
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 export const chatAPI = {
-  async sendMessage(message, conversationId = null) {
+  async sendMessage(message, conversationId = null, conversationHistory = []) {
     try {
       const response = await axios.post(`${API_BASE}/chat`, {
         message,
         conversationId,
+        conversationHistory,
         language: 'ja'
       })
 
