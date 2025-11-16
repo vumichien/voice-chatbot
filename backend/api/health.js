@@ -7,8 +7,23 @@
 const { securityMiddleware, applyCorsHeaders } = require('../lib/security')
 
 module.exports = async (req, res) => {
+  // Determine allowed origin
+  const allowedOrigins = [
+    'https://frontend-vumichies-projects.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ]
+  const origin = req.headers.origin
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : '*'
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    applyCorsHeaders(res, allowedOrigin)
+    return res.status(200).end()
+  }
+
   // Apply CORS headers
-  applyCorsHeaders(res)
+  applyCorsHeaders(res, allowedOrigin)
 
   // Light security check (rate limit only, no API key required for health checks)
   const security = securityMiddleware(req, {

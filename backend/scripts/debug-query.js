@@ -16,7 +16,7 @@ async function debugQuery(question) {
   console.log('\n[Step 1] Generating query embedding...')
   const queryEmbedding = await generateEmbedding(question, {
     provider: 'huggingface',
-    model: 'multilingual-e5-base'
+    model: 'ibm-granite'
   })
   console.log(`✓ Generated embedding (${queryEmbedding.length} dimensions)`)
 

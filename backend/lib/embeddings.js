@@ -42,6 +42,13 @@ const JAPANESE_MODELS = {
     prefix: '',
     description: 'Lightweight multilingual (384 dims)'
   },
+  // IBM Granite models
+  'ibm-granite': {
+    name: 'ibm-granite/granite-embedding-278m-multilingual',
+    dimensions: 768,
+    prefix: '',
+    description: 'IBM Granite multilingual (768 dims)'
+  },
   // OpenAI models
   'openai-small': {
     name: 'text-embedding-3-small',
@@ -188,7 +195,7 @@ async function generateHFEmbedding(text, model = 'intfloat/multilingual-e5-large
 async function generateEmbedding(text, options = {}) {
   const {
     provider = 'huggingface', // 'openai' or 'huggingface'
-    model = 'multilingual-e5-base',
+    model = 'ibm-granite',
     retries = 3
   } = options
 
@@ -215,7 +222,7 @@ async function generateEmbedding(text, options = {}) {
 async function generateBatchEmbeddings(texts, options = {}) {
   const {
     provider = 'huggingface',
-    model = 'multilingual-e5-base',
+    model = 'ibm-granite',
     retries = 3
   } = options
 
@@ -265,7 +272,7 @@ async function generateBatchEmbeddings(texts, options = {}) {
 async function processBatch(chunks, options = {}) {
   const {
     provider = 'huggingface',
-    model = 'multilingual-e5-base',
+    model = 'ibm-granite',
     batchSize = 100,
     onProgress = null
   } = options
@@ -326,7 +333,7 @@ async function processBatch(chunks, options = {}) {
 async function generateEmbeddings(chunksData, options = {}) {
   const {
     provider = 'huggingface',
-    model = 'multilingual-e5-base', // Default: good for Japanese
+    model = 'ibm-granite', // Default: IBM Granite multilingual
     batchSize = 100,
     retries = 3,
     onProgress = null

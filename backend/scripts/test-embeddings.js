@@ -40,7 +40,7 @@ async function main() {
 
   // Determine provider and model
   const provider = hasHF ? 'huggingface' : 'openai'
-  const model = hasHF ? 'multilingual-e5-base' : 'openai-small'
+  const model = hasHF ? 'ibm-granite' : 'openai-small'
 
   console.log(`\n✓ Using ${provider} provider`)
   console.log(`✓ Model: ${model}\n`)

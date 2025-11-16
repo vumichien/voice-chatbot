@@ -48,7 +48,7 @@ async function main() {
 
   // Configure pipeline
   const embeddingProvider = hasHF ? 'huggingface' : 'openai'
-  const embeddingModel = hasHF ? 'multilingual-e5-base' : 'openai-small'
+  const embeddingModel = hasHF ? 'ibm-granite' : 'openai-small'
   const vectorDBProvider = hasPinecone ? 'pinecone' : 'upstash'
 
   console.log(`\n✓ Pipeline Configuration:`)

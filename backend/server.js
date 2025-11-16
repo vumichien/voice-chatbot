@@ -64,7 +64,7 @@ app.listen(PORT, () => {
 
   console.log(`\n⚙️  Configuration:`)
   console.log(`   Embedding Provider: ${process.env.EMBEDDING_PROVIDER || 'huggingface (default)'}`)
-  console.log(`   Embedding Model: ${process.env.EMBEDDING_MODEL || 'multilingual-e5-base (default)'}`)
+  console.log(`   Embedding Model: ${process.env.EMBEDDING_MODEL || 'ibm-granite (default)'}`)
   console.log(`   Vector DB Provider: ${process.env.VECTORDB_PROVIDER || 'pinecone (default)'}`)
   console.log(`   Pinecone Index: ${process.env.PINECONE_INDEX_NAME || 'transcript-knowledge (default)'}`)
   console.log(`   OpenRouter Model: ${process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free (default)'}`)

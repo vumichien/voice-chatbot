@@ -18,13 +18,23 @@ const axios = require('axios')
  * Main chat endpoint handler
  */
 module.exports = async (req, res) => {
+  // Determine allowed origin
+  const allowedOrigins = [
+    'https://frontend-vumichies-projects.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ]
+  const origin = req.headers.origin
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : '*'
+
   // Handle CORS preflight
-  if (handlePreflight(req, res)) {
-    return
+  if (req.method === 'OPTIONS') {
+    applyCorsHeaders(res, allowedOrigin)
+    return res.status(200).end()
   }
 
   // Apply CORS headers
-  applyCorsHeaders(res)
+  applyCorsHeaders(res, allowedOrigin)
 
   // Only accept POST
   if (req.method !== 'POST') {
@@ -33,7 +43,7 @@ module.exports = async (req, res) => {
 
   // Security checks
   const security = securityMiddleware(req, {
-    requireApiKey: true,
+    requireApiKey: false,  // Public chatbot - no API key required
     enableRateLimit: true,
     rateLimitOptions: {
       windowMs: 60000,  // 1 minute
@@ -74,7 +84,7 @@ module.exports = async (req, res) => {
     console.log('[Chat] Step 1: Generating query embedding...')
     const queryEmbedding = await generateEmbedding(message, {
       provider: process.env.EMBEDDING_PROVIDER || 'huggingface',
-      model: process.env.EMBEDDING_MODEL || 'multilingual-e5-base'
+      model: process.env.EMBEDDING_MODEL || 'ibm-granite'
     })
 
     // STEP 2: Vector search

@@ -75,7 +75,7 @@ async function main() {
 
   // Configure pipeline
   const embeddingProvider = hasHF ? 'huggingface' : 'openai'
-  const embeddingModel = hasHF ? 'multilingual-e5-base' : 'openai-small'
+  const embeddingModel = hasHF ? 'ibm-granite' : 'openai-small'
 
   console.log(`\n✓ Configuration:`)
   console.log(`   Embedding: ${embeddingProvider} (${embeddingModel})`)

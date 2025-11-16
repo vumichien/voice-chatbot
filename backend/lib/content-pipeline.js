@@ -46,7 +46,7 @@ const DEFAULT_CONFIG = {
 
   // Stage 6: Embeddings
   embeddingProvider: 'huggingface',
-  embeddingModel: 'multilingual-e5-base',
+  embeddingModel: 'ibm-granite',
   embeddingBatchSize: 100,
 
   // Stage 7: Vector DB
