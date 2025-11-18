@@ -1,4 +1,4 @@
-ye/**
+/**
  * Check Pinecone Index Statistics
  *
  * Displays information about your Pinecone index including:
@@ -25,8 +25,9 @@ async function main() {
     process.exit(1)
   }
 
-  const indexName = 'transcript-knowledge'
-  console.log(`\n📋 Index: ${indexName}\n`)
+  const indexName = process.env.PINECONE_INDEX_NAME || 'transcript-knowledge'
+  console.log(`\n📋 Index: ${indexName}`)
+  console.log(`   (Using: ${process.env.PINECONE_INDEX_NAME ? 'PINECONE_INDEX_NAME from .env' : 'default: transcript-knowledge'})\n`)
 
   try {
     const stats = await getIndexStats({
@@ -35,18 +36,48 @@ async function main() {
     })
 
     console.log('📈 Statistics:')
-    console.log(`   Total Vectors: ${stats.totalVectorCount || 0}`)
     console.log(`   Dimension: ${stats.dimension || 'N/A'}`)
 
+    // Calculate total from namespaces first (more accurate)
+    // Note: Pinecone uses 'recordCount' for the number of vectors/records
+    let totalFromNamespaces = 0
+    let hasNamespaceData = false
+    
     if (stats.namespaces && Object.keys(stats.namespaces).length > 0) {
+      hasNamespaceData = true
       console.log(`\n📁 Namespaces:`)
       Object.entries(stats.namespaces).forEach(([namespace, data]) => {
-        const ns = namespace || '(default)'
-        console.log(`\n   ${ns}:`)
-        console.log(`     Vectors: ${data.vectorCount}`)
+        // Handle different namespace names (empty string = default namespace)
+        const ns = namespace === '' ? '(default)' : namespace
+        
+        // Pinecone returns recordCount (not vectorCount) for the number of vectors
+        let vectorCount = 0
+        if (typeof data === 'object' && data !== null) {
+          // Try recordCount first (Pinecone's actual field), then vectorCount as fallback
+          vectorCount = data.recordCount || data.vectorCount || 0
+        } else if (typeof data === 'number') {
+          vectorCount = data
+        }
+        
+        totalFromNamespaces += vectorCount
+        const status = vectorCount > 0 ? '✅' : '⚠️'
+        console.log(`\n   ${status} ${ns}:`)
+        console.log(`     Vectors: ${vectorCount}`)
       })
     } else {
       console.log(`\n📁 Namespaces: None (using default namespace)`)
+    }
+
+    // Get totalVectorCount as fallback
+    const totalVectorsFromAPI = stats.totalVectorCount || 0
+    
+    // Use namespace total if available (more accurate), otherwise use API total
+    const actualTotal = hasNamespaceData ? totalFromNamespaces : totalVectorsFromAPI
+    
+    // Display the accurate total
+    console.log(`\n📊 Total Vectors: ${actualTotal}`)
+    if (hasNamespaceData && totalVectorsFromAPI !== totalFromNamespaces) {
+      console.log(`   (Note: API reports ${totalVectorsFromAPI}, but namespace data shows ${totalFromNamespaces})`)
     }
 
     // Index fullness (if available)
@@ -58,13 +89,16 @@ async function main() {
     console.log(`\n✅ Statistics retrieved successfully!`)
 
     // Provide helpful context
-    if (stats.totalVectorCount === 0) {
-      console.log(`\n⚠️  No vectors found in the index.`)
-      console.log(`\n📌 To add data:`)
-      console.log(`   1. Place your transcript.srt file in backend/data/`)
-      console.log(`   2. Run: npm run process-transcript`)
+    if (actualTotal === 0) {
+      console.log(`\n⚠️  ⚠️  ⚠️  KHÔNG CÓ DỮ LIỆU TRONG DATABASE! ⚠️  ⚠️  ⚠️`)
+      console.log(`\n📌 Để thêm dữ liệu, bạn có thể:`)
+      console.log(`\n   Cách 1: Cập nhật từ knowledge.json (Khuyến nghị)`)
+      console.log(`   npm run update-knowledge -- --cleanup`)
+      console.log(`\n   Cách 2: Xử lý transcript mới`)
+      console.log(`   1. Đặt file transcript.srt vào backend/data/`)
+      console.log(`   2. Chạy: npm run process-transcript`)
     } else {
-      console.log(`\n📌 Index is populated and ready for queries!`)
+      console.log(`\n✅ Index có ${actualTotal} vectors và sẵn sàng cho queries!`)
       console.log(`\n   Test the chatbot:`)
       console.log(`   1. Start backend: node server.js`)
       console.log(`   2. Start frontend: cd frontend && npm run dev`)

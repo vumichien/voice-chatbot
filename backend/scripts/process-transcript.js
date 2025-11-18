@@ -46,6 +46,8 @@ async function main() {
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const hasPinecone = !!process.env.PINECONE_API_KEY
   const hasUpstash = !!(process.env.UPSTASH_VECTOR_URL && process.env.UPSTASH_VECTOR_TOKEN)
+  const useAIForKnowledge = process.env.USE_OPENAI_FOR_KNOWLEDGE_EXTRACTION === 'true' || 
+                            process.env.USE_OPENAI_FOR_KNOWLEDGE_EXTRACTION === '1'
 
   console.log(`   Embedding Provider:`)
   console.log(`     - HuggingFace: ${hasHF ? '✓ Configured' : '✗ Not configured'}`)
@@ -53,6 +55,8 @@ async function main() {
   console.log(`   Vector Database:`)
   console.log(`     - Pinecone: ${hasPinecone ? '✓ Configured' : '✗ Not configured'}`)
   console.log(`     - Upstash: ${hasUpstash ? '✓ Configured' : '✗ Not configured'}`)
+  console.log(`   Knowledge Extraction:`)
+  console.log(`     - AI Enhancement: ${useAIForKnowledge && hasOpenAI ? '✓ Enabled (OpenAI)' : useAIForKnowledge && !hasOpenAI ? '✗ Enabled but OpenAI not configured' : '○ Disabled (using basic extraction)'}`)
 
   if (!hasHF && !hasOpenAI) {
     console.error('\n❌ No embedding provider configured!')
@@ -82,6 +86,11 @@ async function main() {
   console.log(`\n✓ Pipeline Configuration:`)
   console.log(`   Embedding: ${embeddingProvider} (${embeddingModel})`)
   console.log(`   Vector DB: ${vectorDBProvider}`)
+  if (useAIForKnowledge && hasOpenAI) {
+    console.log(`   Knowledge Extraction: Enhanced with OpenAI (gpt-4o-mini)`)
+  } else {
+    console.log(`   Knowledge Extraction: Basic extraction (no AI enhancement)`)
+  }
   console.log(`\n📄 Transcript: ${transcriptPath}`)
 
   // Configure pipeline with progress tracking
@@ -102,6 +111,10 @@ async function main() {
     enableErrorCorrection: true,
     normalizeChars: true,
     removeNonVerbal: true,
+
+    // Topic extraction
+    maxCharsPerTopic: 2000, // Max chars per topic (will split if exceeded)
+    similarityThreshold: 0.5, // Similarity threshold for embedding-based topic detection
 
     // Output
     saveIntermediateResults: true,

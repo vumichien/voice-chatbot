@@ -1,5 +1,20 @@
 <template>
   <div class="flex flex-col h-[650px] glass rounded-3xl overflow-hidden">
+    <!-- Header with Auto-play Toggle -->
+    <div class="px-6 pt-4 pb-2 flex items-center justify-between border-b border-white/10">
+      <div class="text-sm text-white/80">
+        <!-- Empty space for balance -->
+      </div>
+      <button
+        @click="toggleAutoPlay"
+        class="flex items-center space-x-2 px-3 py-1.5 rounded-lg glass-light hover:glass-strong transition-all text-xs text-white"
+        :title="audioSettings.autoPlay() ? 'Disable auto-play' : 'Enable auto-play'"
+      >
+        <span>{{ audioSettings.autoPlay() ? '🔊' : '🔇' }}</span>
+        <span>{{ audioSettings.autoPlay() ? 'Auto-play ON' : 'Auto-play OFF' }}</span>
+      </button>
+    </div>
+
     <!-- Messages Area -->
     <div
       ref="messagesContainer"
@@ -16,12 +31,21 @@
         v-for="(message, index) in messages"
         :key="index"
         :message="message"
+        :audio-state="getAudioState(message)"
+        @play-audio="handlePlayAudio"
+        @pause-audio="handlePauseAudio"
+        @resume-audio="handleResumeAudio"
+        @replay-audio="handleReplayAudio"
       />
 
       <!-- Loading Indicator -->
       <div v-if="isLoading" class="flex items-start space-x-3">
-        <div class="w-10 h-10 rounded-full glass-light flex items-center justify-center">
-          <span class="text-xs font-semibold text-white">AI</span>
+        <div class="w-10 h-10 rounded-full glass-light flex items-center justify-center overflow-hidden">
+          <img
+            src="/avatar/aoki-1.png"
+            alt="Aoki"
+            class="w-full h-full object-cover rounded-full"
+          />
         </div>
         <div class="flex space-x-1 items-center pt-3">
           <div class="w-2.5 h-2.5 rounded-full animate-bounce bg-white" style="animation-delay: 0ms;"></div>
@@ -50,6 +74,8 @@
 import { ref, nextTick, onMounted, watch } from 'vue'
 import { chatAPI } from '../services/api.js'
 import { chatLogger } from '../services/logger.js'
+import { useAudioPlayer } from '../composables/useAudioPlayer.js'
+import { useAudioSettings } from '../composables/useAudioSettings.js'
 import MessageBubble from './MessageBubble.vue'
 import InputBox from './InputBox.vue'
 
@@ -60,6 +86,46 @@ const error = ref(null)
 const conversationId = ref(null)
 const messagesContainer = ref(null)
 const currentLogId = ref(null)
+
+// Audio player and settings
+const audioPlayer = useAudioPlayer()
+const audioSettings = useAudioSettings()
+
+// Generate unique message ID
+function generateMessageId(message, index) {
+  return `msg_${index}_${message.timestamp?.getTime() || Date.now()}`
+}
+
+// Get audio state for a message
+function getAudioState(message) {
+  const messageId = generateMessageId(message, messages.value.indexOf(message))
+  return audioPlayer.getAudioState(messageId)
+}
+
+// Audio control handlers
+function handlePlayAudio(message) {
+  const messageId = generateMessageId(message, messages.value.indexOf(message))
+  if (message.audio) {
+    audioPlayer.playAudio(message.audio, messageId, true)
+  }
+}
+
+function handlePauseAudio() {
+  audioPlayer.pauseAudio()
+}
+
+function handleResumeAudio() {
+  audioPlayer.resumeAudio()
+}
+
+function handleReplayAudio(message) {
+  audioPlayer.replayAudio()
+}
+
+// Toggle auto-play
+function toggleAutoPlay() {
+  audioSettings.toggleAutoPlay()
+}
 
 // Load conversation from sessionStorage
 onMounted(() => {
@@ -137,18 +203,38 @@ async function handleSendMessage(userMessage) {
       conversationId.value = response.conversationId
     }
 
-    // Add AI response (without sources in UI)
-    messages.value.push({
+    // Log full API response for debugging
+    console.log('[ChatContainer] Full API Response:', {
+      responseLength: response.response.length,
+      response: response.response,
+      sources: response.sources,
+      metadata: response.metadata,
+      hasAudio: !!response.audio
+    })
+
+    // Add AI response with audio
+    const assistantMessage = {
       role: 'assistant',
       content: response.response,
-      sources: response.sources || [], // Keep in data for logging
+      audio: response.audio || null, // Base64 audio data
+      sources: response.sources || [],
       timestamp: new Date()
-    })
+    }
+
+    messages.value.push(assistantMessage)
 
     // Save and scroll
     saveConversation()
     await nextTick()
     scrollToBottom()
+
+    // Auto-play audio if enabled and available
+    if (response.audio && audioSettings.getAutoPlay()) {
+      await nextTick() // Wait for message to render
+      const messageId = generateMessageId(assistantMessage, messages.value.length - 1)
+      console.log('[ChatContainer] Auto-playing audio for message:', messageId)
+      audioPlayer.playAudio(response.audio, messageId, true)
+    }
 
   } catch (err) {
     console.error('Chat error:', err)
@@ -172,6 +258,9 @@ function clearConversation() {
   if (currentLogId.value && messages.value.length > 0) {
     chatLogger.saveLog(currentLogId.value, messages.value, true)
   }
+
+  // Stop any playing audio
+  audioPlayer.stopAudio()
 
   // Create new log for new conversation
   currentLogId.value = chatLogger.createNewLog()
@@ -198,6 +287,9 @@ function loadSession(sessionId) {
     if (currentLogId.value && messages.value.length > 0) {
       chatLogger.saveLog(currentLogId.value, messages.value, true)
     }
+
+    // Stop any playing audio
+    audioPlayer.stopAudio()
 
     // Load the session
     const session = chatLogger.loadSession(sessionId)

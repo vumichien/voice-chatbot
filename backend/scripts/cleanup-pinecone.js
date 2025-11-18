@@ -37,7 +37,7 @@ async function main() {
 
   // Get namespace from command line
   const namespace = process.argv[2] || ''
-  const indexName = 'transcript-knowledge'
+  const indexName = process.env.PINECONE_INDEX_NAME || 'transcript-knowledge'
 
   console.log(`\n📋 Configuration:`)
   console.log(`   Index: ${indexName}`)

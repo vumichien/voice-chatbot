@@ -54,13 +54,13 @@ function extractContext(knowledgeObjects, currentIndex, direction = 'before') {
 /**
  * Create chunk from knowledge object
  */
-function createChunk(knowledge, chunkIndex, contextBefore, contextAfter) {
+function createChunk(knowledge, chunkIndex, contextBefore, contextAfter, options = {}) {
   // Build main content
   let content = knowledge.content.context || knowledge.content.main
 
-  // If content too long, split intelligently
-  const maxSize = 1000
-  const minSize = 200
+  // Use options from config instead of hardcoded values
+  const maxSize = options.maxChunkSize || 1000
+  const minSize = options.minChunkSize || 200
 
   if (content.length > maxSize) {
     // Split at sentence boundary
@@ -146,7 +146,10 @@ function createSemanticChunks(knowledgeData, options = {}) {
     const contextAfter = includeContext ? extractContext(knowledgeObjects, index, 'after') : null
 
     // Create chunk(s) from knowledge
-    const knowledgeChunks = createChunk(knowledge, chunkId, contextBefore, contextAfter)
+    const knowledgeChunks = createChunk(knowledge, chunkId, contextBefore, contextAfter, {
+      maxChunkSize,
+      minChunkSize
+    })
 
     chunks.push(...knowledgeChunks)
     chunkId += knowledgeChunks.length

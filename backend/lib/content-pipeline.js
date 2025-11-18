@@ -38,10 +38,12 @@ const DEFAULT_CONFIG = {
   // Stage 4: Knowledge extraction
   extractKeywords: true,
   generateQA: false,
+  maxCharsPerTopic: 2000, // Max characters per topic
+  similarityThreshold: 0.5, // Similarity threshold for embedding-based topic detection
 
   // Stage 5: Chunking
-  minChunkSize: 200,
-  maxChunkSize: 1000,
+  minChunkSize: 100,
+  maxChunkSize: 500,
   includeContext: true,
 
   // Stage 6: Embeddings
@@ -184,9 +186,17 @@ async function processTranscript(srtFilePath, config = {}) {
 
     // Stage 4: Extract Knowledge
     progress.start(3, 'Extracting knowledge...')
+    // Check if OpenAI should be used for knowledge extraction enhancement
+    const useAIForKnowledge = process.env.USE_OPENAI_FOR_KNOWLEDGE_EXTRACTION === 'true' || 
+                              process.env.USE_OPENAI_FOR_KNOWLEDGE_EXTRACTION === '1'
     const knowledge = await extractKnowledge(cleaned, {
-      useAI: false,
-      generateQA: cfg.generateQA
+      useAI: useAIForKnowledge,
+      generateQA: cfg.generateQA,
+      useEmbeddingForTopics: true, // Use embedding-based topic detection
+      maxCharsPerTopic: cfg.maxCharsPerTopic || 2000, // Max chars per topic
+      similarityThreshold: cfg.similarityThreshold || 0.5, // Similarity threshold
+      embeddingProvider: cfg.embeddingProvider,
+      embeddingModel: cfg.embeddingModel
     })
     results.knowledge = knowledge
     console.log(`✓ Extracted ${knowledge.knowledge.length} knowledge objects`)

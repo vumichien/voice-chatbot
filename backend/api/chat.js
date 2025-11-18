@@ -12,6 +12,8 @@
 const { searchVectors } = require('../lib/vectordb')
 const { generateEmbedding } = require('../lib/embeddings')
 const { securityMiddleware, applyCorsHeaders, handlePreflight } = require('../lib/security')
+const { generateSpeech, isConfigured: isTTSConfigured } = require('../lib/tts-service')
+const { getCachedAudio, setCachedAudio } = require('../lib/cache')
 const axios = require('axios')
 
 /**
@@ -113,28 +115,32 @@ module.exports = async (req, res) => {
 
     // STEP 3: Build context from retrieved chunks
     const context = searchResults
-      .map((result, idx) => {
-        return `[ソース ${idx + 1}] ${result.metadata.content}\n(時間: ${result.metadata.timestamp})`
-      })
+      .map((result) => result.metadata.content)
       .join('\n\n')
 
     // STEP 4: Generate response with LLM
     console.log('[Chat] Step 3: Generating response with LLM...')
 
-    const systemPrompt = `あなたは青木さんです。ユーザーの質問に、青木さん本人として答えてください。
+    const systemPrompt = `あなたは青木仁志です。ユーザーの質問に、あなた自身として直接答えてください。
 
-以下はあなた（青木さん）の動画トランスクリプトから抽出した情報です。この情報に基づいて、あなた自身の経験や考えとして答えてください。
+以下はあなた自身の知識と経験です:
 
-重要なルール:
-1. あなたは青木さん本人です。一人称（私、僕）を使って答えてください
-2. 「私は29歳の時に...」「僕の考えでは...」のように、自分自身の経験として語ってください
-3. 提供された知識ベースの情報のみを使用してください
-4. 知識ベースにない情報については「その質問については、今回の話では触れていませんね」と答えてください
-5. 簡潔で分かりやすく、温かみのある日本語で答えてください
-6. 青木さんの話し方や人柄を反映してください
+${context}
 
-あなた（青木さん）の知識ベース:
-${context}`
+回答ルール:
+1. 一人称（私、僕）で話してください
+2. 自分の経験として語ってください
+3. 上記の知識にない内容は「その話は今回触れていませんね」と答えてください
+4. 「〜によると」「〜と言っています」などの第三者表現は使わないでください
+5. 自然で温かい日本語で、自分の言葉として話してください
+6. **極めて重要**: 簡潔に答えてください。核心となるポイントに集中し、2-3文で完結させてください
+7. 回答は必ず150字以内に収めてください。冗長な説明や繰り返しは避けてください
+8. 強調したい言葉は**太字**で囲んでください（例：**100%必要**）
+
+あなたは青木仁志本人です。他の誰かの意見を紹介するのではなく、あなた自身の考えを述べてください。`
+
+    console.log('[Chat] System prompt length:', systemPrompt.length)
+    console.log('[Chat] Context chunks:', searchResults.length)
 
     const llmResponse = await callOpenRouter({
       system: systemPrompt,
@@ -143,7 +149,46 @@ ${context}`
       model: process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free'
     })
 
-    // STEP 5: Format sources
+    // Log full response for debugging
+    console.log('[Chat] Full LLM Response:')
+    console.log('='.repeat(80))
+    console.log(llmResponse)
+    console.log('='.repeat(80))
+    console.log('[Chat] Response length:', llmResponse.length)
+
+    // STEP 5: Generate audio from response (with caching)
+    let audioBase64 = null
+    let audioGenerated = false
+    let audioFromCache = false
+
+    if (isTTSConfigured()) {
+      try {
+        console.log('[Chat] Checking audio cache...')
+        audioBase64 = getCachedAudio(llmResponse)
+
+        if (audioBase64) {
+          audioFromCache = true
+          audioGenerated = true
+          console.log('[Chat] Using cached audio')
+        } else {
+          console.log('[Chat] Generating audio with TTS...')
+          audioBase64 = await generateSpeech(llmResponse)
+          
+          // Cache the generated audio
+          setCachedAudio(llmResponse, audioBase64)
+          audioGenerated = true
+          audioFromCache = false
+          console.log('[Chat] Audio generated and cached')
+        }
+      } catch (ttsError) {
+        console.error('[Chat] TTS Error (continuing without audio):', ttsError.message)
+        // Continue without audio if TTS fails
+      }
+    } else {
+      console.log('[Chat] TTS not configured, skipping audio generation')
+    }
+
+    // STEP 6: Format sources
     const sources = searchResults.map(result => ({
       text: result.metadata.content.substring(0, 200) + (result.metadata.content.length > 200 ? '...' : ''),
       timestamp: result.metadata.timestamp,
@@ -154,16 +199,25 @@ ${context}`
     const processingTime = Date.now() - startTime
     console.log(`[Chat] Response generated in ${processingTime}ms`)
 
-    // Return response
-    return res.status(200).json({
+    // Return response with audio
+    const responseData = {
       response: llmResponse,
       sources,
       conversationId: conversationId || generateId(),
       metadata: {
         retrievedChunks: searchResults.length,
-        processingTime
+        processingTime,
+        audioGenerated,
+        audioFromCache
       }
-    })
+    }
+
+    // Add audio if generated
+    if (audioBase64) {
+      responseData.audio = audioBase64
+    }
+
+    return res.status(200).json(responseData)
 
   } catch (error) {
     console.error('[Chat] Error:', error)
@@ -220,8 +274,8 @@ async function callOpenRouter({ system, conversationHistory, currentMessage, mod
       {
         model,
         messages,
-        temperature: 0.7,
-        max_tokens: 500
+        temperature: 0.8,
+        max_tokens: 600
       },
       {
         headers: {

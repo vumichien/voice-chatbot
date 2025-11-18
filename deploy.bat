@@ -38,6 +38,46 @@ goto menu
 echo.
 echo Deploying Backend...
 cd backend
+
+REM Check if .env exists
+if not exist .env (
+    echo Warning: .env file not found in backend directory
+    echo Please create .env file before deploying
+    cd ..
+    pause
+    exit /b 1
+)
+
+REM Update environment variables to Vercel
+echo.
+echo Updating environment variables to Vercel...
+echo This may take a moment...
+echo.
+
+REM Use Node.js script to sync .env to Vercel (preferred)
+if exist scripts\sync-env-to-vercel.js (
+    call node scripts\sync-env-to-vercel.js production
+    if !ERRORLEVEL! NEQ 0 (
+        echo Warning: Failed to sync some environment variables
+        echo You may need to set them manually in Vercel Dashboard
+        echo.
+    )
+) else if exist scripts\sync-env-to-vercel.ps1 (
+    REM Fallback to PowerShell script
+    powershell -ExecutionPolicy Bypass -File scripts\sync-env-to-vercel.ps1
+    if !ERRORLEVEL! NEQ 0 (
+        echo Warning: Failed to sync some environment variables
+        echo You may need to set them manually in Vercel Dashboard
+        echo.
+    )
+) else (
+    echo Warning: sync-env-to-vercel script not found
+    echo Skipping environment variable sync
+    echo Please set environment variables manually in Vercel Dashboard
+    echo Or run: vercel env add VARIABLE_NAME production
+    echo.
+)
+
 call vercel --prod
 if %ERRORLEVEL% NEQ 0 (
     echo Backend deployment failed
