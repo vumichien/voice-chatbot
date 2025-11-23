@@ -14,7 +14,7 @@ const { generateEmbedding } = require('../lib/embeddings')
 const { securityMiddleware, applyCorsHeaders, handlePreflight } = require('../lib/security')
 const { generateSpeech, isConfigured: isTTSConfigured } = require('../lib/tts-service')
 const { getCachedAudio, setCachedAudio } = require('../lib/cache')
-const axios = require('axios')
+const { callLLM, getConfiguredProvider } = require('../lib/llm-service')
 
 /**
  * Main chat endpoint handler
@@ -142,11 +142,18 @@ ${context}
     console.log('[Chat] System prompt length:', systemPrompt.length)
     console.log('[Chat] Context chunks:', searchResults.length)
 
-    const llmResponse = await callOpenRouter({
+    // Get LLM provider from config (with intelligent fallback)
+    const llmProvider = getConfiguredProvider()
+    if (!llmProvider) {
+      throw new Error('No LLM provider configured. Please set LLM_PROVIDER and corresponding API key (OPENAI_API_KEY or OPENROUTER_API_KEY)')
+    }
+    console.log(`[Chat] Using LLM provider: ${llmProvider}`)
+
+    const llmResponse = await callLLM({
+      provider: llmProvider,
       system: systemPrompt,
       conversationHistory,
-      currentMessage: message,
-      model: process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free'
+      currentMessage: message
     })
 
     // Log full response for debugging
@@ -224,9 +231,11 @@ ${context}
 
     // Check if it's an API key issue
     if (error.message && error.message.includes('API key')) {
+      const provider = process.env.LLM_PROVIDER || 'openai'
+      const keyName = provider === 'openrouter' ? 'OPENROUTER_API_KEY' : 'OPENAI_API_KEY'
       return res.status(500).json({
         error: 'API configuration error',
-        message: 'Please check OPENROUTER_API_KEY is set in environment variables'
+        message: `Please check ${keyName} is set in environment variables`
       })
     }
 
@@ -237,70 +246,6 @@ ${context}
   }
 }
 
-/**
- * Call OpenRouter API with conversation history
- */
-async function callOpenRouter({ system, conversationHistory, currentMessage, model }) {
-  // Check for API key
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY environment variable not set')
-  }
-
-  try {
-    // Build messages array: system + conversation history + current message
-    const messages = [
-      { role: 'system', content: system }
-    ]
-
-    // Add conversation history (exclude the current message if already in history)
-    if (conversationHistory && conversationHistory.length > 0) {
-      // Filter out the current message to avoid duplication
-      const historyMessages = conversationHistory
-        .filter(msg => msg.content !== currentMessage)
-        .map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      messages.push(...historyMessages)
-    }
-
-    // Add current user message
-    messages.push({ role: 'user', content: currentMessage })
-
-    console.log(`[OpenRouter] Sending ${messages.length} messages to LLM`)
-
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model,
-        messages,
-        temperature: 0.8,
-        max_tokens: 600
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-          'X-Title': 'Voice Chatbot Knowledge Base'
-        },
-        timeout: 30000 // 30 second timeout
-      }
-    )
-
-    return response.data.choices[0].message.content
-  } catch (error) {
-    if (error.response) {
-      console.error('[OpenRouter] API Error:', error.response.data)
-      throw new Error(`OpenRouter API error: ${error.response.data.error?.message || error.response.statusText}`)
-    } else if (error.request) {
-      console.error('[OpenRouter] No response received')
-      throw new Error('OpenRouter API timeout or network error')
-    } else {
-      throw error
-    }
-  }
-}
 
 /**
  * Generate conversation ID

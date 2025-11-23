@@ -5,6 +5,7 @@
  */
 
 const { securityMiddleware, applyCorsHeaders } = require('../lib/security')
+const { getConfiguredProvider, getAvailableProviders, isProviderConfigured } = require('../lib/llm-service')
 
 module.exports = async (req, res) => {
   // Determine allowed origin
@@ -42,11 +43,17 @@ module.exports = async (req, res) => {
     })
   }
   try {
+    const llmProvider = getConfiguredProvider()
+    const availableProviders = getAvailableProviders()
+    
     const health = {
       status: 'ok',
       timestamp: new Date().toISOString(),
       environment: {
-        hasOpenRouter: !!process.env.OPENROUTER_API_KEY,
+        llmProvider: llmProvider || 'none',
+        availableLLMProviders: availableProviders,
+        hasOpenAI: isProviderConfigured('openai'),
+        hasOpenRouter: isProviderConfigured('openrouter'),
         hasHuggingFace: !!process.env.HUGGINGFACE_API_KEY,
         hasPinecone: !!process.env.PINECONE_API_KEY
       }

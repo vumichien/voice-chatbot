@@ -93,7 +93,20 @@ const audioSettings = useAudioSettings()
 
 // Generate unique message ID
 function generateMessageId(message, index) {
-  return `msg_${index}_${message.timestamp?.getTime() || Date.now()}`
+  let timestamp = Date.now()
+  if (message.timestamp) {
+    // Handle both Date objects and string/number timestamps
+    if (message.timestamp instanceof Date) {
+      timestamp = message.timestamp.getTime()
+    } else if (typeof message.timestamp === 'string') {
+      // Try to parse ISO string or convert to Date
+      const date = new Date(message.timestamp)
+      timestamp = isNaN(date.getTime()) ? Date.now() : date.getTime()
+    } else if (typeof message.timestamp === 'number') {
+      timestamp = message.timestamp
+    }
+  }
+  return `msg_${index}_${timestamp}`
 }
 
 // Get audio state for a message
@@ -133,7 +146,11 @@ onMounted(() => {
   if (saved) {
     try {
       const data = JSON.parse(saved)
-      messages.value = data.messages || []
+      // Convert timestamp strings back to Date objects
+      messages.value = (data.messages || []).map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+      }))
       conversationId.value = data.conversationId || null
       currentLogId.value = data.logId || null
     } catch (e) {
@@ -298,8 +315,11 @@ function loadSession(sessionId) {
       return
     }
 
-    // Update state
-    messages.value = session.messages || []
+    // Update state - convert timestamp strings back to Date objects
+    messages.value = (session.messages || []).map(msg => ({
+      ...msg,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+    }))
     conversationId.value = session.conversationId || null
     currentLogId.value = session.id
     error.value = null

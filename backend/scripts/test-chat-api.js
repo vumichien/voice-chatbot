@@ -193,20 +193,34 @@ async function main() {
   console.log('=' .repeat(80))
 
   // Check environment variables
+  const { getConfiguredProvider, getAvailableProviders, isProviderConfigured } = require('../lib/llm-service')
+  
   console.log('\n📋 Checking environment variables:')
-  const hasOpenRouter = !!process.env.OPENROUTER_API_KEY
+  const llmProvider = getConfiguredProvider()
+  const availableProviders = getAvailableProviders()
+  const hasOpenAI = isProviderConfigured('openai')
+  const hasOpenRouter = isProviderConfigured('openrouter')
   const hasEmbedding = !!(process.env.HUGGINGFACE_API_KEY || process.env.OPENAI_API_KEY)
   const hasVectorDB = !!process.env.PINECONE_API_KEY
 
+  console.log(`   LLM Provider: ${llmProvider || 'none'} ${availableProviders.length > 0 ? `(available: ${availableProviders.join(', ')})` : ''}`)
+  console.log(`   OpenAI API: ${hasOpenAI ? '✓' : '✗'}`)
   console.log(`   OpenRouter API: ${hasOpenRouter ? '✓' : '✗'}`)
   console.log(`   Embedding Provider: ${hasEmbedding ? '✓' : '✗'}`)
   console.log(`   Vector DB: ${hasVectorDB ? '✓' : '✗'}`)
 
-  if (!hasOpenRouter) {
-    console.error('\n❌ OPENROUTER_API_KEY not set!')
+  if (!llmProvider || availableProviders.length === 0) {
+    console.error('\n❌ No LLM provider configured!')
     console.log('Please add to your .env file:')
-    console.log('OPENROUTER_API_KEY=your_key_here')
-    console.log('\nGet your key at: https://openrouter.ai/keys')
+    console.log('  For OpenAI:')
+    console.log('    LLM_PROVIDER=openai')
+    console.log('    OPENAI_API_KEY=your_key_here')
+    console.log('  OR for OpenRouter:')
+    console.log('    LLM_PROVIDER=openrouter')
+    console.log('    OPENROUTER_API_KEY=your_key_here')
+    console.log('\nGet your keys at:')
+    console.log('  OpenAI: https://platform.openai.com/api-keys')
+    console.log('  OpenRouter: https://openrouter.ai/keys')
     process.exit(1)
   }
 
